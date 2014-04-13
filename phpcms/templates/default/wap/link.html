@@ -1,0 +1,7 @@
+{template "wap","header"}
+  <div class="adds" id="hd">{wap_pos($typeid)}</div>
+  <h2><a href="#" class="cat">{$link['catname']}</a></h2>
+  {loop $links $l}
+    <a href="{$l['url']}">{$l['catname']}</a><br/>
+  {/loop}
+{template "wap","footer"}

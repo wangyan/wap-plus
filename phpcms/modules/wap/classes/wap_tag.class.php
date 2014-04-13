@@ -34,18 +34,13 @@ class wap_tag {
 				$catid = intval($TYPE['cat']);
 				$this->set_modelid($catid);
 				if(!$this->category[$catid]) return false;
-				$catType = $this->category[$catid]['type'];
-				if($catType == 0){
-					if($this->category[$catid]['child']) {
-						$catids_str = $this->category[$catid]['arrchildid'];
-						$pos = strpos($catids_str,',')+1;
-						$catids_str = substr($catids_str, $pos);
-						$sql = "status=99 AND catid IN ($catids_str)";
-					} else {
-						$sql = "status=99 AND catid='$catid'";
-					}
-				}else{
-						$sql ="";
+				if($this->category[$catid]['child']) {
+					$catids_str = $this->category[$catid]['arrchildid'];
+					$pos = strpos($catids_str,',')+1;
+					$catids_str = substr($catids_str, $pos);
+					$sql = "status=99 AND catid IN ($catids_str)";
+				} else {
+					$sql = "status=99 AND catid='$catid'";
 				}
 			}
 			return $this->db->count($sql);
@@ -88,67 +83,48 @@ class wap_tag {
 			$this->set_modelid($catid);
 			//var_dump($this->category);
 			if(!$this->category[$catid]) return false;
-			
-      $catType = $this->category[$catid]['type'];
-      if($catType == 0){
-        if(is_array($child) && count($child) >0 ) {
-          foreach ($child as $_k) $catids_str .= ','.$_k['cat'];
-          $pos = strpos($catids_str,',')+1;
-          $catids_str = substr($catids_str, $pos);
-          $sql = "status=99 AND catid IN ($catids_str)".$thumb;
-        } else {
-          $sql = "status=99 AND catid='$catid'".$thumb;
-        }
-        $order = $data['order'];
-        $return = $this->db->select($sql, '*', $data['limit'], $order, '', 'id');
-      }elseif($catType == 1){
-      	$tablename = $this->db->table_name = $this->db->db_tablepre.'page';
-        if(is_array($child) && count($child) >0 ) {
-          foreach ($child as $_k) $catids_str .= ','.$_k['cat'];
-          $pos = strpos($catids_str,',')+1;
-          $catids_str = substr($catids_str, $pos);
-          $sql = "catid IN ($catids_str)";
-        } else {
-          $sql = "catid='$catid'";
-        }
-        $order = "updatetime DESC";
-        $return = $this->db->select($sql, '*', $data['limit'], $order, '', '');
-      }elseif($catType == 2){
-        if(is_array($child) && count($child) >0 ) {
-          foreach ($child as $_k) {
-          	$return[$_k['typename']] = $this->category[$_k['cat']];
-          }
-        }else{
-        	$return[$TYPE['typename']] = $this->category[$catid];
-        }
-      }
-    }
 
-    //调用副表的数据
-    if (isset($data['moreinfo']) && intval($data['moreinfo']) == 1) {
-      $ids = array();
-      foreach ($return as $v) {
-        if (isset($v['id']) && !empty($v['id'])) {
-          $ids[] = $v['id'];
-        } else {
-          continue;
-        }
-      }
-      if (!empty($ids)) {
-        $this->db->table_name = $this->db->table_name.'_data';
-        $ids = implode('\',\'', $ids);
-        $r = $this->db->select("`id` IN ('$ids')", '*', '', '', '', 'id');
-        if (!empty($r)) {
-          foreach ($r as $k=>$v) {
-            if (isset($return[$k])) $return[$k] = array_merge($v, $return[$k]);
-          }
-        }
-      }
-    }
-    return $return;
-}
+			$type = $this->category[$catid]['type'];
+			if($type == 0){
+				if(is_array($child) && count($child) >0 ) {
+					foreach ($child as $_k) $catids_str .= ','.$_k['cat'];
+					$pos = strpos($catids_str,',')+1;
+					$catids_str = substr($catids_str, $pos);
+					$sql = "status=99 AND catid IN ($catids_str)".$thumb;
+				} else {
+					$sql = "status=99 AND catid='$catid'".$thumb;
+				}
+			}
+		}
+		if($type == 0){
+			$order = $data['order'];
+			$return = $this->db->select($sql, '*', $data['limit'], $order, '', 'id');
+		}
+						
+		//调用副表的数据
+		if (isset($data['moreinfo']) && intval($data['moreinfo']) == 1) {
+			$ids = array();
+			foreach ($return as $v) {
+				if (isset($v['id']) && !empty($v['id'])) {
+					$ids[] = $v['id'];
+				} else {
+					continue;
+				}
+			}
+			if (!empty($ids)) {
+				$this->db->table_name = $this->db->table_name.'_data';
+				$ids = implode('\',\'', $ids);
+				$r = $this->db->select("`id` IN ('$ids')", '*', '', '', '', 'id');
+				if (!empty($r)) {
+					foreach ($r as $k=>$v) {
+						if (isset($return[$k])) $return[$k] = array_merge($v, $return[$k]);
+					}
+				}
+			}
+		}
+		return $return;
+	}
 	
-
 	/**
 	 * 推荐位标签
 	 * @param $data

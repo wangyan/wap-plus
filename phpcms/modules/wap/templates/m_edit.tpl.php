@@ -64,6 +64,10 @@ include $this->admin_tpl('header', 'admin');
     <td class="y-bg"><input type="text" class="input-text" name="setting[page_template]" id="page_template" size="20" value="<?php echo $page_template?>"/>.html</td>
     </tr>
      <tr>
+    <th width="120"><?php echo L('wap_link_tpl')?></th>
+    <td class="y-bg"><input type="text" class="input-text" name="setting[link_template]" id="link_template" size="20" value="<?php echo $link_template?>"/>.html</td>
+    </tr>
+     <tr>
     <th width="120"><?php echo L('wap_hotword')?></th>
     <td class="y-bg">
  <textarea style="height: 100px; width: 200px;" id="options" cols="20" rows="2" name="setting[hotwords]"><?php echo $hotwords?></textarea>   <?php echo L('wap_hotword_desc')?>

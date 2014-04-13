@@ -26,13 +26,13 @@ class index {
 	
     //展示列表页
 	public function lists() {
-		$parentids = array();
+	  $parentids = array();
 		$WAP = $this->wap;
 		$TYPE = $this->types;
 		$WAP_SETTING = string2array($WAP['setting']);
 		$GLOBALS['siteid'] = $siteid = max($this->siteid,1);
 		$typeid = intval($_GET['typeid']);		
-		if(!$typeid) exit(L('parameter_error'));
+		if(!$typeid) exit(L('parameter_error'));					
 		$catid = $this->types[$typeid]['cat'];	
 		$siteids = getcache('category_content','commons');
 		$siteid = $siteids[$catid];
@@ -43,42 +43,46 @@ class index {
 		$siteid = $GLOBALS['siteid'] = $CAT['siteid'];
 		extract($CAT);	
 		foreach($TYPE as $_t) $parentids[] = $_t['parentid'];
-		
-		$page = isset($_GET['page']) && intval($_GET['page']) ? intval($_GET['page']) : 1;
-		$pagesize = $WAP_SETTING['listnum'] ? intval($WAP_SETTING['listnum']) : 20 ;
-		$offset = ($page - 1) * $pagesize;
-		$catType = $CAT['type'];
-		if($catType == 0){
-			$template = ($catType == 0 && $TYPE[$typeid]['parentid']==0 && in_array($typeid,array_unique($parentids))) ? $WAP_SETTING['category_template'] : $WAP_SETTING['list_template'];
+
+		if($type==0) {
+			$template = ($TYPE[$typeid]['parentid']==0 && in_array($typeid,array_unique($parentids))) ? $WAP_SETTING['category_template'] : $WAP_SETTING['list_template'];	
 			$MODEL = getcache('model','commons');
 			$modelid = $CAT['modelid'];
 			$tablename = $this->db->table_name = $this->db->db_tablepre.$MODEL[$modelid]['tablename'];
 			$total = $this->db->count(array('status'=>'99','catid'=>$catid));
+			$page = isset($_GET['page']) && intval($_GET['page']) ? intval($_GET['page']) : 1;
+			$pagesize = $WAP_SETTING['listnum'] ? intval($WAP_SETTING['listnum']) : 20 ;
+			$offset = ($page - 1) * $pagesize;
 			$list = $this->db->select(array('status'=>'99','catid'=>$catid), '*', $offset.','.$pagesize,'inputtime DESC');
-		}elseif($catType == 1){
-			$this->page_db = pc_base::load_model('page_model');
-			$r = $this->page_db->get_one(array('catid'=>$catid));
-			if($r) extract($r);
+		}elseif ($type==1) {
 			$template = $WAP_SETTING['page_template'] ? $WAP_SETTING['page_template'] : 'page';
-			$arrchild_arr = $CATEGORYS[$parentid]['arrchildid'];
-			if($arrchild_arr=='') $arrchild_arr = $CATEGORYS[$catid]['arrchildid'];
-			$arrchild_arr = explode(',',$arrchild_arr);
-			array_shift($arrchild_arr);
-		}elseif($catType == 2){
-			$tablename = $this->db->table_name = $this->db->db_tablepre.'link';
-			$total = $this->db->count();
-			$list = $this->db->select('', '*', $offset.','.$pagesize,'linkid DESC');
+			$this->page_db = pc_base::load_model('page_model');
+			$arrchild_arr = explode(',',$CAT['arrchildid']);
+			if ($CAT["parentid"] == 0)
+				$p = $this->page_db->get_one(array('catid'=>$arrchild_arr[1]));
+			else
+				$p = $this->page_db->get_one(array('catid'=>$catid));
+		}elseif ($type==2) {
+			$child = subtype($typeid);
+      if(is_array($child) && count($child) >0 ) {
+        $template = $WAP_SETTING['link_template'] ? $WAP_SETTING['link_template'] : 'link';
+        $link = $CATEGORYS[$catid];
+        foreach ($child as $_k) $links[$_k['typeid']] = $CATEGORYS[$_k['cat']];
+      }else{
+      	$linkUrl = $CAT['url'];
+      	header("Location: $linkUrl");
+      }
 		}
-		
+
 		//构造wap url规则
 		define('URLRULE', 'index.php?m=wap&c=index&a=lists&typeid={$typeid}~index.php?m=wap&c=index&a=lists&typeid={$typeid}&page={$page}');
 		$GLOBALS['URL_ARRAY'] = array('typeid'=>$typeid);
 		
 		$pages = wpa_pages($total, $page, $pagesize);
-		//echo "<pre>";var_dump($arrchild_arr);echo "</pre>";
-		include template('wap', $template);
-	}
 
+		include template('wap', $template);
+	}	
+	
     //展示内容页
 	public function show() {
 		$WAP = $this->wap;
